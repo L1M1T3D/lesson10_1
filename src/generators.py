@@ -17,6 +17,8 @@ def transaction_descriptions(transactions: List[Dict[str, dict]]) -> Generator:
 
 
 def card_number_generator(start: int, end: int) -> Generator:
+    """Функция принимает диапазон, в котором будут генерироваться номера банковских карт, используя формат XXXX XXXX
+    XXXX XXXX."""
     for i in range(start, end + 1):
         num = f"{i:016}"
         card_number = f"{num[:4]} {num[4:8]} {num[8:12]} {num[12:16]}"
