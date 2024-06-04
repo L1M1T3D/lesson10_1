@@ -13,7 +13,9 @@ def log(filename: Union[str, None] = None) -> Callable:
             """Внутренняя функция, выполняющая логирование до и после вызова основной функции."""
             try:
                 result = func(*args, **kwargs)
-                log_to_file(f"{func.__name__} ok", filename)
+                message = f"{func.__name__} ok"
+                log_to_file(message, filename)
+                print(message)
                 return result
             except Exception as e:
                 message = f"{func.__name__} error: {e}. Inputs: {args}, {kwargs}"
@@ -30,14 +32,3 @@ def log_to_file(msg: str, filename: Union[str, None] = None) -> None:
     if filename:
         with open(filename, "a") as file:
             file.write(msg + "\n")
-    else:
-        print(msg)
-
-
-@log(filename="mylog.txt")
-def my_function(x: Any, y: Any) -> Any:
-    """Функция возвращает сложение двух переменных."""
-    return x + y
-
-
-my_function(1, 2)
