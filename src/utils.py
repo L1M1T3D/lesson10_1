@@ -1,61 +1,49 @@
 import json
 import os
-from typing import Any
+from typing import Any, Dict, List
 
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-API_KEY = os.getenv('API_KEY')
-
-transaction = {
-  "id": 441945886,
-  "state": "EXECUTED",
-  "date": "2019-08-26T10:50:58.294041",
-  "operationAmount": {
-    "amount": "319.58",
-    "currency": {
-      "name": "руб.",
-      "code": "USD"
-    }
-  },
-  "description": "Перевод организации",
-  "from": "Maestro 1596837868705199",
-  "to": "Счет 64686473678894779589"
-}
+API_KEY = os.getenv("API_KEY")
 
 
-def finance_data(path: str) -> list:
+def finance_data(path: str) -> List[Dict[str, float]]:
     """Принимает на вход путь до JSON-файла и возвращает список словарей с данными о финансовых транзакциях."""
     try:
-        with open(path, encoding='UTF-8') as f:
+        with open(path, encoding="UTF-8") as f:
             try:
                 data = json.load(f)
-                return data
+                if isinstance(data, list):
+                    return data
+                else:
+                    return []
             except json.JSONDecodeError:
                 return []
     except FileNotFoundError:
         return []
 
 
-def get_exchange_rate(from_currency: str, to_currency='RUB') -> Any:
-    """Принимает на вход валюту"""
-    url = f'https://api.apilayer.com/exchangerates_data/latest?symbols={to_currency}&base={from_currency}'
-    headers = {
-        'apikey': API_KEY
-    }
+def get_exchange_rate(from_currency: str, to_currency: str = "RUB") -> Any:
+    """Принимает код валюты, из которой нужно конвертировать и код валюты, в которую нужно конвертировать,
+    возвращает текущий обменный курс."""
+    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={to_currency}&base={from_currency}"
+    headers = {"apikey": API_KEY}
     response = requests.get(url, headers=headers)
-    data = response.json()
-    if to_currency in data['rates']:
-        return data['rates'][to_currency]
+    data = json.loads(response.text)["rates"]["RUB"]
+    return data
 
 
 def get_sum_of_transaction(transaction: dict) -> float:
-    amount = transaction['operationAmount']['amount']
-    currency = transaction['operationAmount']['currency']['code']
-    if currency == 'RUB':
+    """Принимает сумму и код валюты, возвращает сумму, конвертированную в рубли (RUB)."""
+    amount = transaction["operationAmount"]["amount"]
+    currency = transaction["operationAmount"]["currency"]["code"]
+    if currency == "RUB":
         return float(amount)
-    elif currency in ['USD', 'EUR']:
+    elif currency in ["USD", "EUR"]:
         exchange_rate = get_exchange_rate(currency)
         result = float(amount) * exchange_rate
         return float(result)
+    else:
+        raise ValueError("Неподдерживаемая валюта!")
